@@ -1,122 +1,145 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState } from "react";
+import { Button, Chip, Separator } from "@heroui/react";
+import { Sidebar } from "./components/Sidebar";
+import { TaskItem } from "./components/TaskItem";
+import { TaskBoard } from "./components/TaskBoard";
+import { EmptyState } from "./components/EmptyState";
+import "./App.css";
+
+type ViewMode = "list" | "board";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activeNav, setActiveNav] = useState("my-tasks");
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [showEmpty, setShowEmpty] = useState(true);
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="flex min-h-dvh w-full bg-paper">
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        activeNav={activeNav}
+        onNavChange={(nav) => {
+          setActiveNav(nav);
+          setSidebarOpen(false);
+        }}
+      />
 
-      <div className="ticks"></div>
+      <main className="flex flex-1 flex-col min-w-0">
+        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-paper-edge bg-paper/80 px-4 py-3 backdrop-blur-md sm:px-6">
+          <Button
+            isIconOnly
+            variant="ghost"
+            size="sm"
+            className="lg:hidden"
+            onPress={() => setSidebarOpen(true)}
+            aria-label="Open sidebar"
+          >
+            <svg className="size-5" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </Button>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+          <h1 className="font-display text-lg font-semibold text-ink sm:text-xl">
+            My tasks
+          </h1>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+          <div className="ml-auto flex items-center gap-2">
+            <div className="hidden items-center rounded-lg border border-paper-edge bg-surface p-0.5 sm:flex">
+              <button
+                type="button"
+                onClick={() => setViewMode("list")}
+                className={`
+                  rounded-md px-2.5 py-1 text-xs font-medium transition-colors duration-150
+                  ${viewMode === "list"
+                    ? "bg-ink/5 text-ink"
+                    : "text-graphite hover:text-ink"
+                  }
+                `}
+                aria-pressed={viewMode === "list"}
+              >
+                <svg className="size-3.5" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("board")}
+                className={`
+                  rounded-md px-2.5 py-1 text-xs font-medium transition-colors duration-150
+                  ${viewMode === "board"
+                    ? "bg-ink/5 text-ink"
+                    : "text-graphite hover:text-ink"
+                  }
+                `}
+                aria-pressed={viewMode === "board"}
+              >
+                <svg className="size-3.5" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <rect x="2" y="2" width="4" height="12" rx="1" stroke="currentColor" strokeWidth="1.3" />
+                  <rect x="8" y="2" width="4" height="8" rx="1" stroke="currentColor" strokeWidth="1.3" />
+                </svg>
+              </button>
+            </div>
+
+            <Button
+              size="sm"
+              onPress={() => setShowEmpty(!showEmpty)}
+            >
+              <svg className="size-4" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              New task
+            </Button>
+          </div>
+        </header>
+
+        <div className="flex items-center gap-2 border-b border-paper-edge px-4 py-2 sm:px-6">
+          <Chip size="sm" variant="soft" color="accent">
+            Status
+          </Chip>
+          <Chip size="sm" variant="secondary" color="default">
+            Date
+          </Chip>
+        </div>
+
+        <Separator />
+
+        <div className="flex-1 overflow-y-auto px-4 py-3 sm:px-6">
+          {showEmpty ? (
+            <EmptyState onCreateTask={() => setShowEmpty(false)} />
+          ) : viewMode === "list" ? (
+            <div className="space-y-1">
+              <TaskItem
+                title="Review dashboard design"
+                project="Personal"
+                date="Jul 12"
+                id="#tq-042"
+              />
+              <TaskItem
+                title="Send proposal to client"
+                project="Work"
+                date="Jul 10"
+                id="#tq-039"
+                defaultChecked
+              />
+              <TaskItem
+                title="Research animation library"
+                project="Personal"
+                date="Jul 15"
+                id="#tq-045"
+              />
+              <div className="py-12 text-center text-sm text-graphite">
+                &mdash; End of tasks &mdash;
+              </div>
+            </div>
+          ) : (
+            <TaskBoard />
+          )}
+        </div>
+      </main>
+    </div>
+  );
 }
 
-export default App
+export default App;
