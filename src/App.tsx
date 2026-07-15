@@ -1,25 +1,62 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button, Chip, Separator } from "@heroui/react";
 import { Sidebar } from "./components/Sidebar";
 import { TaskItem } from "./components/TaskItem";
 import { TaskBoard } from "./components/TaskBoard";
 import { EmptyState } from "./components/EmptyState";
+import { CreateTaskInline } from "./components/CreateTaskInline";
+import { TaskFormModal } from "./components/TaskFormModal";
 import type { Project } from "./types/project";
+import type { Task, TaskStatus } from "./types/task";
 import { generateProjectId, loadProjects, saveProjects } from "./utils/projects";
+import { generateTaskId, loadTasks, saveTasks } from "./utils/tasks";
 import "./App.css";
 
 type ViewMode = "list" | "board";
+
+const navLabels: Record<string, string> = {
+  "my-tasks": "My tasks",
+  today: "Today",
+  upcoming: "Upcoming",
+  important: "Important",
+};
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeNav, setActiveNav] = useState("my-tasks");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
-  const [showEmpty, setShowEmpty] = useState(true);
+  const [showInlineCreate, setShowInlineCreate] = useState(false);
   const [projects, setProjects] = useState<Project[]>(loadProjects);
+  const [tasks, setTasks] = useState<Task[]>(loadTasks);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   useEffect(() => {
     saveProjects(projects);
   }, [projects]);
+
+  useEffect(() => {
+    saveTasks(tasks);
+  }, [tasks]);
+
+  const filteredTasks = useMemo(() => {
+    if (activeNav.startsWith("project-")) {
+      const projectId = activeNav.replace("project-", "");
+      return tasks.filter((t) => t.projectId === projectId);
+    }
+    return tasks;
+  }, [tasks, activeNav]);
+
+  const headerTitle = useMemo(() => {
+    if (activeNav.startsWith("project-")) {
+      const projectId = activeNav.replace("project-", "");
+      return projects.find((p) => p.id === projectId)?.label ?? "Project";
+    }
+    return navLabels[activeNav] ?? "My tasks";
+  }, [activeNav, projects]);
+
+  const activeProjectId = activeNav.startsWith("project-")
+    ? activeNav.replace("project-", "")
+    : undefined;
 
   function handleAddProject(label: string) {
     setProjects((prev) => [...prev, { id: generateProjectId(), label }]);
@@ -31,6 +68,50 @@ function App() {
 
   function handleEditProject(id: string, label: string) {
     setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, label } : p)));
+  }
+
+  function handleCreateTask(title: string, projectId: string) {
+    const now = new Date();
+    const date = `${now.toLocaleString("en", { month: "short" })} ${now.getDate()}`;
+    setTasks((prev) => [
+      ...prev,
+      { id: generateTaskId(), title, projectId, date, status: "todo" as TaskStatus, completed: false },
+    ]);
+    setShowInlineCreate(false);
+  }
+
+  function handleUpdateTask(data: { title: string; projectId: string; date?: string; status: TaskStatus }) {
+    if (!editingTask) return;
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === editingTask.id
+          ? { ...t, ...data, completed: data.status === "done" }
+          : t
+      )
+    );
+    setEditingTask(null);
+  }
+
+  function handleToggleTask(id: string) {
+    setTasks((prev) =>
+      prev.map((t) => {
+        if (t.id !== id) return t;
+        const newCompleted = !t.completed;
+        return {
+          ...t,
+          completed: newCompleted,
+          status: newCompleted ? "done" : "todo",
+        };
+      })
+    );
+  }
+
+  function handleDeleteTask(id: string) {
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+  }
+
+  function getProjectName(projectId: string): string | undefined {
+    return projects.find((p) => p.id === projectId)?.label;
   }
 
   return (
@@ -65,7 +146,7 @@ function App() {
           </Button>
 
           <h1 className="font-display text-lg font-semibold text-ink sm:text-xl">
-            My tasks
+            {headerTitle}
           </h1>
 
           <div className="ml-auto flex items-center gap-2">
@@ -107,7 +188,7 @@ function App() {
 
             <Button
               size="sm"
-              onPress={() => setShowEmpty(!showEmpty)}
+              onPress={() => setShowInlineCreate(true)}
             >
               <svg className="size-4" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                 <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -129,38 +210,51 @@ function App() {
         <Separator />
 
         <div className="flex-1 overflow-y-auto px-4 py-3 sm:px-6">
-          {showEmpty ? (
-            <EmptyState onCreateTask={() => setShowEmpty(false)} />
+          {filteredTasks.length === 0 && !showInlineCreate ? (
+            <EmptyState onCreateTask={() => setShowInlineCreate(true)} />
           ) : viewMode === "list" ? (
             <div className="space-y-1">
-              <TaskItem
-                title="Review dashboard design"
-                project="Personal"
-                date="Jul 12"
-                id="#tq-042"
-              />
-              <TaskItem
-                title="Send proposal to client"
-                project="Work"
-                date="Jul 10"
-                id="#tq-039"
-                defaultChecked
-              />
-              <TaskItem
-                title="Research animation library"
-                project="Personal"
-                date="Jul 15"
-                id="#tq-045"
-              />
+              {showInlineCreate && (
+                <CreateTaskInline
+                  projects={projects}
+                  defaultProjectId={activeProjectId}
+                  onSave={handleCreateTask}
+                  onCancel={() => setShowInlineCreate(false)}
+                />
+              )}
+              {filteredTasks.map((task) => (
+                <TaskItem
+                  key={task.id}
+                  task={task}
+                  projectName={getProjectName(task.projectId)}
+                  onToggle={handleToggleTask}
+                  onEdit={setEditingTask}
+                  onDelete={handleDeleteTask}
+                />
+              ))}
               <div className="py-12 text-center text-sm text-graphite">
                 &mdash; End of tasks &mdash;
               </div>
             </div>
           ) : (
-            <TaskBoard />
+            <TaskBoard
+              tasks={filteredTasks}
+              projects={projects}
+              onToggle={handleToggleTask}
+              onEdit={setEditingTask}
+              onDelete={handleDeleteTask}
+            />
           )}
         </div>
       </main>
+
+      <TaskFormModal
+        isOpen={editingTask !== null}
+        onClose={() => setEditingTask(null)}
+        onSave={handleUpdateTask}
+        task={editingTask}
+        projects={projects}
+      />
     </div>
   );
 }
