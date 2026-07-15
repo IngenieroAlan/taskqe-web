@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Chip, Separator } from "@heroui/react";
 import { Sidebar } from "./components/Sidebar";
 import { TaskItem } from "./components/TaskItem";
 import { TaskBoard } from "./components/TaskBoard";
 import { EmptyState } from "./components/EmptyState";
+import type { Project } from "./types/project";
+import { generateProjectId, loadProjects, saveProjects } from "./utils/projects";
 import "./App.css";
 
 type ViewMode = "list" | "board";
@@ -13,6 +15,23 @@ function App() {
   const [activeNav, setActiveNav] = useState("my-tasks");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [showEmpty, setShowEmpty] = useState(true);
+  const [projects, setProjects] = useState<Project[]>(loadProjects);
+
+  useEffect(() => {
+    saveProjects(projects);
+  }, [projects]);
+
+  function handleAddProject(label: string) {
+    setProjects((prev) => [...prev, { id: generateProjectId(), label }]);
+  }
+
+  function handleDeleteProject(id: string) {
+    setProjects((prev) => prev.filter((p) => p.id !== id));
+  }
+
+  function handleEditProject(id: string, label: string) {
+    setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, label } : p)));
+  }
 
   return (
     <div className="flex min-h-dvh w-full bg-paper">
@@ -24,6 +43,10 @@ function App() {
           setActiveNav(nav);
           setSidebarOpen(false);
         }}
+        projects={projects}
+        onAddProject={handleAddProject}
+        onDeleteProject={handleDeleteProject}
+        onEditProject={handleEditProject}
       />
 
       <main className="flex flex-1 flex-col min-w-0">

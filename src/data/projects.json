@@ -1,0 +1,5 @@
+[
+  { "id": "personal", "label": "Personal" },
+  { "id": "work", "label": "Work" },
+  { "id": "other", "label": "Other" }
+]

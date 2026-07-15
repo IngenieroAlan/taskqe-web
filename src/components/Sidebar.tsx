@@ -1,10 +1,16 @@
-import { SearchField, Separator } from "@heroui/react";
+import { useRef, useState } from "react";
+import { Button, Input, Label, Modal, SearchField, Separator, TextField } from "@heroui/react";
+import type { Project } from "../types/project";
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
   activeNav: string;
   onNavChange: (nav: string) => void;
+  projects: Project[];
+  onAddProject: (label: string) => void;
+  onDeleteProject: (id: string) => void;
+  onEditProject: (id: string, label: string) => void;
 }
 
 const navItems = [
@@ -49,13 +55,70 @@ const navItems = [
   },
 ];
 
-const projects = [
-  { id: "personal", label: "Personal" },
-  { id: "work", label: "Work" },
-  { id: "other", label: "Other" },
-];
+export function Sidebar({
+  isOpen,
+  onClose,
+  activeNav,
+  onNavChange,
+  projects,
+  onAddProject,
+  onDeleteProject,
+  onEditProject,
+}: SidebarProps) {
+  const [isAdding, setIsAdding] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [editProjectName, setEditProjectName] = useState("");
+  const addInputRef = useRef<HTMLInputElement>(null);
 
-export function Sidebar({ isOpen, onClose, activeNav, onNavChange }: SidebarProps) {
+  function handleAddSubmit() {
+    const trimmed = newProjectName.trim();
+    if (trimmed) {
+      onAddProject(trimmed);
+      setNewProjectName("");
+      setIsAdding(false);
+    }
+  }
+
+  function handleAddKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter") {
+      handleAddSubmit();
+    } else if (e.key === "Escape") {
+      setNewProjectName("");
+      setIsAdding(false);
+    }
+  }
+
+  function handleStartAdd() {
+    setIsAdding(true);
+    setTimeout(() => addInputRef.current?.focus(), 0);
+  }
+
+  function handleOpenEdit(project: Project) {
+    setEditingProject(project);
+    setEditProjectName(project.label);
+  }
+
+  function handleEditSubmit() {
+    if (editingProject) {
+      const trimmed = editProjectName.trim();
+      if (trimmed) {
+        onEditProject(editingProject.id, trimmed);
+      }
+      setEditingProject(null);
+      setEditProjectName("");
+    }
+  }
+
+  function handleEditKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter") {
+      handleEditSubmit();
+    } else if (e.key === "Escape") {
+      setEditingProject(null);
+      setEditProjectName("");
+    }
+  }
+
   return (
     <>
       {isOpen && (
@@ -121,17 +184,46 @@ export function Sidebar({ isOpen, onClose, activeNav, onNavChange }: SidebarProp
           <Separator className="my-3" />
 
           <div className="px-1">
-            <p className="mb-1.5 px-1.5 text-xs font-medium text-graphite uppercase tracking-wide">
-              Projects
-            </p>
+            <div className="mb-1.5 flex items-center justify-between px-1.5">
+              <p className="text-xs font-medium text-graphite uppercase tracking-wide">
+                Projects
+              </p>
+              <button
+                type="button"
+                onClick={handleStartAdd}
+                className="flex size-5 items-center justify-center rounded text-graphite transition-colors duration-150 hover:bg-ink/8 hover:text-ink"
+                aria-label="Add project"
+              >
+                <svg className="size-3.5" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+
+            {isAdding && (
+              <div className="mb-1 px-1">
+                <input
+                  ref={addInputRef}
+                  type="text"
+                  value={newProjectName}
+                  onChange={(e) => setNewProjectName(e.target.value)}
+                  onKeyDown={handleAddKeyDown}
+                  onBlur={handleAddSubmit}
+                  placeholder="Project name..."
+                  className="w-full rounded-md border border-paper-edge bg-surface px-2.5 py-1.5 text-sm text-ink outline-none transition-colors duration-150 focus:border-indigo-ink/40"
+                />
+              </div>
+            )}
+
             <ul className="flex flex-col gap-0.5">
               {projects.map((project) => (
-                <li key={project.id}>
+                <li key={project.id} className="group relative">
                   <button
                     type="button"
                     onClick={() => onNavChange(`project-${project.id}`)}
+                    onDoubleClick={() => handleOpenEdit(project)}
                     className={`
-                      flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5
+                      flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 pr-8
                       text-sm transition-colors duration-150
                       ${activeNav === `project-${project.id}`
                         ? "bg-indigo-ink/8 font-medium text-indigo-ink"
@@ -139,10 +231,20 @@ export function Sidebar({ isOpen, onClose, activeNav, onNavChange }: SidebarProp
                       }
                     `}
                   >
-                    <svg className="size-4" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <svg className="size-4 shrink-0" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                       <path d="M2 4.5A1.5 1.5 0 013.5 3h3.172a1.5 1.5 0 011.06.44l.829.828a1.5 1.5 0 001.06.44H12.5A1.5 1.5 0 0114 6.212V11.5a1.5 1.5 0 01-1.5 1.5h-9A1.5 1.5 0 012 11.5v-7z" stroke="currentColor" strokeWidth="1.5" />
                     </svg>
                     {project.label}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDeleteProject(project.id)}
+                    className="absolute right-1 top-1/2 flex size-5 -translate-y-1/2 items-center justify-center rounded text-graphite opacity-0 transition-all duration-150 hover:bg-danger/10 hover:text-danger group-hover:opacity-100"
+                    aria-label={`Delete ${project.label}`}
+                  >
+                    <svg className="size-3" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                      <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
                   </button>
                 </li>
               ))}
@@ -150,6 +252,36 @@ export function Sidebar({ isOpen, onClose, activeNav, onNavChange }: SidebarProp
           </div>
         </nav>
       </aside>
+
+      <Modal.Backdrop isOpen={editingProject !== null} onOpenChange={(open) => { if (!open) { setEditingProject(null); setEditProjectName(""); } }}>
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-[320px]">
+            <Modal.CloseTrigger />
+            <Modal.Header>
+              <Modal.Heading>Edit project</Modal.Heading>
+            </Modal.Header>
+            <Modal.Body>
+              <TextField className="w-full" variant="secondary">
+                <Label>Project name</Label>
+                <Input
+                  value={editProjectName}
+                  onChange={(e) => setEditProjectName(e.target.value)}
+                  onKeyDown={handleEditKeyDown}
+                  placeholder="Enter project name"
+                />
+              </TextField>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button slot="close" variant="secondary">
+                Cancel
+              </Button>
+              <Button slot="close" onPress={handleEditSubmit}>
+                Save
+              </Button>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
     </>
   );
 }
