@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Button, Input, Label, Modal, SearchField, Separator, TextField } from "@heroui/react";
 import type { Project } from "../types/project";
+import { ConfirmDialog } from "./ConfirmDialog";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -73,6 +74,7 @@ export function Sidebar({
   const [newProjectName, setNewProjectName] = useState("");
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [editProjectName, setEditProjectName] = useState("");
+  const [deletingProject, setDeletingProject] = useState<Project | null>(null);
   const addInputRef = useRef<HTMLInputElement>(null);
 
   function handleAddSubmit() {
@@ -242,7 +244,7 @@ export function Sidebar({
                   </button>
                   <button
                     type="button"
-                    onClick={() => onDeleteProject(project.id)}
+                    onClick={() => setDeletingProject(project)}
                     className="absolute right-1 top-1/2 flex size-5 -translate-y-1/2 items-center justify-center rounded text-graphite opacity-0 transition-all duration-150 hover:bg-danger/10 hover:text-danger group-hover:opacity-100"
                     aria-label={`Delete ${project.label}`}
                   >
@@ -286,6 +288,14 @@ export function Sidebar({
           </Modal.Dialog>
         </Modal.Container>
       </Modal.Backdrop>
+
+      <ConfirmDialog
+        isOpen={deletingProject !== null}
+        onClose={() => setDeletingProject(null)}
+        onConfirm={() => { if (deletingProject) { onDeleteProject(deletingProject.id); setDeletingProject(null); } }}
+        title="Delete project?"
+        description={`Are you sure you want to delete "${deletingProject?.label ?? ""}" and all its tasks? This action cannot be undone.`}
+      />
     </>
   );
 }

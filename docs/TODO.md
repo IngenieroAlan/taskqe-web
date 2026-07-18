@@ -16,9 +16,9 @@
 
 - [x] Bug de estado en `TaskFormModal` — al editar dos tareas seguidas sin desmontar el modal, muestra datos de la primera. *(2026-07-17)*
 - [x] Input de fecha en `TaskFormModal` es texto plano — sin date picker ni validación. *(2026-07-17)*
-- [ ] Sin confirmación de eliminación — tareas y proyectos se borran con un click sin confirmar.
-- [ ] React Router instalado pero no usado — no hay `Routes` ni `Route` definidos.
-- [ ] Sin drag & drop — en vista board no se pueden mover tareas entre columnas arrastrando; en lista no se puede reordenar.
+- [x] Sin confirmación de eliminación — tareas y proyectos se borran con un click sin confirmar. *(2026-07-17)*
+- [x] React Router instalado pero no usado — no hay `Routes` ni `Route` definidos. *(2026-07-17)*
+- [x] Sin drag & drop — en vista board no se pueden mover tareas entre columnas arrastrando; en lista no se puede reordenar. *(2026-07-17)*
 
 ## Menores
 
@@ -27,4 +27,3 @@
 - [ ] Sin soporte dark mode — solo tema claro.
 - [ ] Título HTML es genérico (`taskqe-web`) en vez de "TaskQE".
 - [ ] README sigue siendo boilerplate de Vite.
-- [ ] Posible conflicto de plugins en `vite.config.ts` — React plugin + Babel plugin configurados simultáneamente.

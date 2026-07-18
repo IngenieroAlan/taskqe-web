@@ -181,6 +181,16 @@ function App() {
     setTasks((prev) => prev.filter((t) => t.id !== id));
   }
 
+  function handleStatusChange(taskId: string, newStatus: TaskStatus) {
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === taskId
+          ? { ...t, status: newStatus, completed: newStatus === "done" }
+          : t
+      )
+    );
+  }
+
   function getProjectName(projectId: string): string | undefined {
     return projects.find((p) => p.id === projectId)?.label;
   }
@@ -370,6 +380,7 @@ function App() {
               onToggleImportant={handleToggleImportant}
               onEdit={setEditingTask}
               onDelete={handleDeleteTask}
+              onStatusChange={handleStatusChange}
             />
           )}
         </div>
