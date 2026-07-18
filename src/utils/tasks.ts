@@ -7,12 +7,19 @@ export function loadTasks(): Task[] {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      return JSON.parse(stored) as Task[];
+      const parsed = JSON.parse(stored) as Task[];
+      return parsed.map((t) => ({
+        ...t,
+        important: t.important ?? false,
+      }));
     }
   } catch {
     // fallback to defaults
   }
-  return [...defaultTasks];
+  return defaultTasks.map((t) => ({
+    ...t,
+    important: t.important ?? false,
+  }));
 }
 
 export function saveTasks(tasks: Task[]): void {
@@ -21,4 +28,9 @@ export function saveTasks(tasks: Task[]): void {
 
 export function generateTaskId(): string {
   return `tq-${Date.now().toString().slice(-6)}`;
+}
+
+export function formatDueDate(iso: string): string {
+  const date = new Date(iso + "T00:00:00");
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }

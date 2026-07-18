@@ -3,24 +3,27 @@
     "id": "tq-042",
     "title": "Review dashboard design",
     "projectId": "personal",
-    "date": "Jul 12",
+    "dueDate": "2026-07-17",
     "status": "todo",
-    "completed": false
+    "completed": false,
+    "important": true
   },
   {
     "id": "tq-039",
     "title": "Send proposal to client",
     "projectId": "work",
-    "date": "Jul 10",
+    "dueDate": "2026-07-10",
     "status": "done",
-    "completed": true
+    "completed": true,
+    "important": false
   },
   {
     "id": "tq-045",
     "title": "Research animation library",
     "projectId": "personal",
-    "date": "Jul 15",
+    "dueDate": "2026-07-20",
     "status": "todo",
-    "completed": false
+    "completed": false,
+    "important": false
   }
 ]

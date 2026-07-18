@@ -21,6 +21,10 @@ const navLabels: Record<string, string> = {
   important: "Important",
 };
 
+function getTodayISO(): string {
+  return new Date().toISOString().split("T")[0];
+}
+
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeNav, setActiveNav] = useState("my-tasks");
@@ -39,11 +43,28 @@ function App() {
   }, [tasks]);
 
   const filteredTasks = useMemo(() => {
+    let result = tasks;
+
     if (activeNav.startsWith("project-")) {
       const projectId = activeNav.replace("project-", "");
-      return tasks.filter((t) => t.projectId === projectId);
+      result = result.filter((t) => t.projectId === projectId);
     }
-    return tasks;
+
+    const today = getTodayISO();
+
+    switch (activeNav) {
+      case "today":
+        result = result.filter((t) => t.dueDate === today);
+        break;
+      case "upcoming":
+        result = result.filter((t) => t.dueDate && t.dueDate > today);
+        break;
+      case "important":
+        result = result.filter((t) => t.important);
+        break;
+    }
+
+    return result;
   }, [tasks, activeNav]);
 
   const headerTitle = useMemo(() => {
@@ -71,16 +92,15 @@ function App() {
   }
 
   function handleCreateTask(title: string, projectId: string) {
-    const now = new Date();
-    const date = `${now.toLocaleString("en", { month: "short" })} ${now.getDate()}`;
+    const dueDate = getTodayISO();
     setTasks((prev) => [
       ...prev,
-      { id: generateTaskId(), title, projectId, date, status: "todo" as TaskStatus, completed: false },
+      { id: generateTaskId(), title, projectId, dueDate, status: "todo" as TaskStatus, completed: false, important: false },
     ]);
     setShowInlineCreate(false);
   }
 
-  function handleUpdateTask(data: { title: string; projectId: string; date?: string; status: TaskStatus }) {
+  function handleUpdateTask(data: { title: string; projectId: string; dueDate?: string; status: TaskStatus; important: boolean }) {
     if (!editingTask) return;
     setTasks((prev) =>
       prev.map((t) =>
@@ -103,6 +123,12 @@ function App() {
           status: newCompleted ? "done" : "todo",
         };
       })
+    );
+  }
+
+  function handleToggleImportant(id: string) {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, important: !t.important } : t))
     );
   }
 
@@ -228,6 +254,7 @@ function App() {
                   task={task}
                   projectName={getProjectName(task.projectId)}
                   onToggle={handleToggleTask}
+                  onToggleImportant={handleToggleImportant}
                   onEdit={setEditingTask}
                   onDelete={handleDeleteTask}
                 />
@@ -241,6 +268,7 @@ function App() {
               tasks={filteredTasks}
               projects={projects}
               onToggle={handleToggleTask}
+              onToggleImportant={handleToggleImportant}
               onEdit={setEditingTask}
               onDelete={handleDeleteTask}
             />
@@ -249,6 +277,7 @@ function App() {
       </main>
 
       <TaskFormModal
+        key={editingTask?.id ?? "new"}
         isOpen={editingTask !== null}
         onClose={() => setEditingTask(null)}
         onSave={handleUpdateTask}

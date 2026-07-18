@@ -1,10 +1,12 @@
 import { AnimatedCheckbox } from "./AnimatedCheckbox";
 import type { Task } from "../types/task";
+import { formatDueDate } from "../utils/tasks";
 
 interface TaskItemProps {
   task: Task;
   projectName?: string;
   onToggle?: (id: string) => void;
+  onToggleImportant?: (id: string) => void;
   onEdit?: (task: Task) => void;
   onDelete?: (id: string) => void;
 }
@@ -25,6 +27,7 @@ export function TaskItem({
   task,
   projectName,
   onToggle,
+  onToggleImportant,
   onEdit,
   onDelete,
 }: TaskItemProps) {
@@ -55,9 +58,9 @@ export function TaskItem({
         </p>
         <div className="mt-1 flex items-center gap-2 text-xs text-graphite">
           {projectName && <span>{projectName}</span>}
-          {projectName && task.date && <span className="text-paper-edge">&middot;</span>}
-          {task.date && <span>{task.date}</span>}
-          {task.date && task.id && <span className="text-paper-edge">&middot;</span>}
+          {projectName && task.dueDate && <span className="text-paper-edge">&middot;</span>}
+          {task.dueDate && <span>{formatDueDate(task.dueDate)}</span>}
+          {task.dueDate && task.id && <span className="text-paper-edge">&middot;</span>}
           {task.id && (
             <span className="font-mono text-[0.6875rem] text-graphite/70">
               #{task.id}
@@ -68,12 +71,34 @@ export function TaskItem({
           </span>
         </div>
       </div>
-      <div className="flex items-center gap-0.5 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+      <div className="flex items-center gap-0.5">
+        {onToggleImportant && (
+          <button
+            type="button"
+            onClick={() => onToggleImportant(task.id)}
+            className={`flex size-6 items-center justify-center rounded transition-colors duration-150 ${
+              task.important
+                ? "text-amber"
+                : "text-graphite/40 opacity-0 group-hover:opacity-100 hover:text-amber"
+            }`}
+            aria-label={task.important ? `Remove importance from ${task.title}` : `Mark ${task.title} as important`}
+          >
+            {task.important ? (
+              <svg className="size-3.5" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                <path d="M8 1.5l1.76 3.56 3.93.57-2.84 2.77.67 3.91L8 10.36 4.48 12.31l.67-3.91L2.31 5.63l3.93-.57L8 1.5z" />
+              </svg>
+            ) : (
+              <svg className="size-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
+                <path d="M8 1.5l1.76 3.56 3.93.57-2.84 2.77.67 3.91L8 10.36 4.48 12.31l.67-3.91L2.31 5.63l3.93-.57L8 1.5z" />
+              </svg>
+            )}
+          </button>
+        )}
         {onEdit && (
           <button
             type="button"
             onClick={() => onEdit(task)}
-            className="flex size-6 items-center justify-center rounded text-graphite transition-colors duration-150 hover:bg-ink/8 hover:text-ink"
+            className="flex size-6 items-center justify-center rounded text-graphite opacity-0 transition-all duration-150 group-hover:opacity-100 hover:bg-ink/8 hover:text-ink"
             aria-label={`Edit ${task.title}`}
           >
             <svg className="size-3.5" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -85,7 +110,7 @@ export function TaskItem({
           <button
             type="button"
             onClick={() => onDelete(task.id)}
-            className="flex size-6 items-center justify-center rounded text-graphite transition-colors duration-150 hover:bg-danger/10 hover:text-danger"
+            className="flex size-6 items-center justify-center rounded text-graphite opacity-0 transition-all duration-150 group-hover:opacity-100 hover:bg-danger/10 hover:text-danger"
             aria-label={`Delete ${task.title}`}
           >
             <svg className="size-3" viewBox="0 0 12 12" fill="none" aria-hidden="true">

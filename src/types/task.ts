@@ -4,7 +4,8 @@ export interface Task {
   id: string;
   title: string;
   projectId: string;
-  date?: string;
+  dueDate?: string;
   status: TaskStatus;
   completed: boolean;
+  important: boolean;
 }

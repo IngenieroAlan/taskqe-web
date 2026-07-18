@@ -12,6 +12,7 @@ interface TaskBoardProps {
   tasks: Task[];
   projects: Project[];
   onToggle: (id: string) => void;
+  onToggleImportant: (id: string) => void;
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
 }
@@ -22,7 +23,7 @@ const columns: BoardColumn[] = [
   { id: "done", label: "Done", color: "var(--success)" },
 ];
 
-export function TaskBoard({ tasks, projects, onToggle, onEdit, onDelete }: TaskBoardProps) {
+export function TaskBoard({ tasks, projects, onToggle, onToggleImportant, onEdit, onDelete }: TaskBoardProps) {
   function getProjectName(projectId: string): string | undefined {
     return projects.find((p) => p.id === projectId)?.label;
   }
@@ -58,6 +59,7 @@ export function TaskBoard({ tasks, projects, onToggle, onEdit, onDelete }: TaskB
                     task={task}
                     projectName={getProjectName(task.projectId)}
                     onToggle={onToggle}
+                    onToggleImportant={onToggleImportant}
                     onEdit={onEdit}
                     onDelete={onDelete}
                   />
