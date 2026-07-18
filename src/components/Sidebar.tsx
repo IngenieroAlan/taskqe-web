@@ -11,6 +11,8 @@ interface SidebarProps {
   onAddProject: (label: string) => void;
   onDeleteProject: (id: string) => void;
   onEditProject: (id: string, label: string) => void;
+  searchQuery: string;
+  onSearchChange: (value: string) => void;
 }
 
 const navItems = [
@@ -64,6 +66,8 @@ export function Sidebar({
   onAddProject,
   onDeleteProject,
   onEditProject,
+  searchQuery,
+  onSearchChange,
 }: SidebarProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
@@ -149,7 +153,7 @@ export function Sidebar({
         </div>
 
         <div className="px-3 pb-3">
-          <SearchField fullWidth name="search" aria-label="Search tasks" variant="secondary">
+          <SearchField fullWidth name="search" aria-label="Search tasks" variant="secondary" value={searchQuery} onChange={onSearchChange}>
             <SearchField.Group>
               <SearchField.SearchIcon />
               <SearchField.Input placeholder="Search..." />

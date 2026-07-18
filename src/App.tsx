@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Button, Chip, Separator } from "@heroui/react";
+import { Button, Chip, Dropdown, Separator } from "@heroui/react";
 import { Sidebar } from "./components/Sidebar";
 import { TaskItem } from "./components/TaskItem";
 import { TaskBoard } from "./components/TaskBoard";
@@ -13,12 +13,27 @@ import { generateTaskId, loadTasks, saveTasks } from "./utils/tasks";
 import "./App.css";
 
 type ViewMode = "list" | "board";
+type DateFilter = "all" | "overdue" | "today" | "upcoming";
 
 const navLabels: Record<string, string> = {
   "my-tasks": "My tasks",
   today: "Today",
   upcoming: "Upcoming",
   important: "Important",
+};
+
+const statusLabels: Record<string, string> = {
+  all: "Status",
+  todo: "To do",
+  "in-progress": "In progress",
+  done: "Done",
+};
+
+const dateLabels: Record<string, string> = {
+  all: "Date",
+  overdue: "Overdue",
+  today: "Today",
+  upcoming: "Upcoming",
 };
 
 function getTodayISO(): string {
@@ -33,6 +48,9 @@ function App() {
   const [projects, setProjects] = useState<Project[]>(loadProjects);
   const [tasks, setTasks] = useState<Task[]>(loadTasks);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<TaskStatus | "all">("all");
+  const [dateFilter, setDateFilter] = useState<DateFilter>("all");
 
   useEffect(() => {
     saveProjects(projects);
@@ -64,8 +82,35 @@ function App() {
         break;
     }
 
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        (t) =>
+          t.title.toLowerCase().includes(query) ||
+          t.id.toLowerCase().includes(query),
+      );
+    }
+
+    if (statusFilter !== "all") {
+      result = result.filter((t) => t.status === statusFilter);
+    }
+
+    if (dateFilter !== "all") {
+      switch (dateFilter) {
+        case "overdue":
+          result = result.filter((t) => t.dueDate && t.dueDate < today);
+          break;
+        case "today":
+          result = result.filter((t) => t.dueDate === today);
+          break;
+        case "upcoming":
+          result = result.filter((t) => t.dueDate && t.dueDate > today);
+          break;
+      }
+    }
+
     return result;
-  }, [tasks, activeNav]);
+  }, [tasks, activeNav, searchQuery, statusFilter, dateFilter]);
 
   const headerTitle = useMemo(() => {
     if (activeNav.startsWith("project-")) {
@@ -140,20 +185,27 @@ function App() {
     return projects.find((p) => p.id === projectId)?.label;
   }
 
+  function handleNavChange(nav: string) {
+    setActiveNav(nav);
+    setStatusFilter("all");
+    setDateFilter("all");
+    setSearchQuery("");
+    setSidebarOpen(false);
+  }
+
   return (
     <div className="flex min-h-dvh w-full bg-paper">
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         activeNav={activeNav}
-        onNavChange={(nav) => {
-          setActiveNav(nav);
-          setSidebarOpen(false);
-        }}
+        onNavChange={handleNavChange}
         projects={projects}
         onAddProject={handleAddProject}
         onDeleteProject={handleDeleteProject}
         onEditProject={handleEditProject}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
       />
 
       <main className="flex flex-1 flex-col min-w-0">
@@ -225,12 +277,59 @@ function App() {
         </header>
 
         <div className="flex items-center gap-2 border-b border-paper-edge px-4 py-2 sm:px-6">
-          <Chip size="sm" variant="soft" color="accent">
-            Status
-          </Chip>
-          <Chip size="sm" variant="secondary" color="default">
-            Date
-          </Chip>
+          <Dropdown>
+            <Dropdown.Trigger>
+              <Chip
+                size="sm"
+                variant={statusFilter !== "all" ? "soft" : "secondary"}
+                color={statusFilter !== "all" ? "accent" : "default"}
+                className="cursor-pointer select-none"
+              >
+                {statusFilter === "all" ? "Status" : statusLabels[statusFilter]}
+              </Chip>
+            </Dropdown.Trigger>
+            <Dropdown.Menu>
+              <Dropdown.Item id="all" onAction={() => setStatusFilter("all")}>
+                All
+              </Dropdown.Item>
+              <Dropdown.Item id="todo" onAction={() => setStatusFilter("todo")}>
+                To do
+              </Dropdown.Item>
+              <Dropdown.Item id="in-progress" onAction={() => setStatusFilter("in-progress")}>
+                In progress
+              </Dropdown.Item>
+              <Dropdown.Item id="done" onAction={() => setStatusFilter("done")}>
+                Done
+              </Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
+
+          <Dropdown>
+            <Dropdown.Trigger>
+              <Chip
+                size="sm"
+                variant={dateFilter !== "all" ? "soft" : "secondary"}
+                color={dateFilter !== "all" ? "accent" : "default"}
+                className="cursor-pointer select-none"
+              >
+                {dateFilter === "all" ? "Date" : dateLabels[dateFilter]}
+              </Chip>
+            </Dropdown.Trigger>
+            <Dropdown.Menu>
+              <Dropdown.Item id="all" onAction={() => setDateFilter("all")}>
+                All
+              </Dropdown.Item>
+              <Dropdown.Item id="overdue" onAction={() => setDateFilter("overdue")}>
+                Overdue
+              </Dropdown.Item>
+              <Dropdown.Item id="today" onAction={() => setDateFilter("today")}>
+                Today
+              </Dropdown.Item>
+              <Dropdown.Item id="upcoming" onAction={() => setDateFilter("upcoming")}>
+                Upcoming
+              </Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
         </div>
 
         <Separator />

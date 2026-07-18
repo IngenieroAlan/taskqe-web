@@ -9,8 +9,8 @@
 - [x] Los filtros de navegación (Today, Upcoming, Important) no funcionan — solo cambian el título del header, no filtran tareas. *(2026-07-17)*
 - [x] Agregar campo `important: boolean` al modelo `Task` para poder marcar tareas como importantes. *(2026-07-17)*
 - [x] Las fechas de las tareas son strings display (`"Jul 12"`) sin formato ISO — imposible comparar, ordenar o filtrar por fecha. *(2026-07-17)*
-- [ ] La barra de búsqueda del sidebar no tiene handler — no filtra tareas al escribir.
-- [ ] Los chips de filtro (Status, Date) del header son UI estática sin handlers ni lógica de filtrado.
+- [x] La barra de búsqueda del sidebar no tiene handler — no filtra tareas al escribir. *(2026-07-17)*
+- [x] Los chips de filtro (Status, Date) del header son UI estática sin handlers ni lógica de filtrado. *(2026-07-17)*
 
 ## Moderadas
 
